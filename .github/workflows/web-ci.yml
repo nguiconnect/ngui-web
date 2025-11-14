@@ -1,0 +1,37 @@
+name: Web CI
+on:
+  pull_request:
+  push:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: |
+            src/package-lock.json
+            package-lock.json
+
+      - name: Install & Build (if src exists)
+        run: |
+          if [ -d src ]; then
+            cd src
+            npm ci
+            npm run build
+          else
+            echo "src/ not found (skipping build)"
+          fi
