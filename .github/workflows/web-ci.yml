@@ -1,9 +1,8 @@
-name: Web CI / build (PR)
+﻿name: Web CI / build (PR)
 
 on:
   pull_request:
     branches: [ develop, main ]
-  workflow_dispatch: # <— adds the Run button
 
 jobs:
   build:
@@ -12,6 +11,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
+          cache: npm
       - run: npm ci || npm i
       - run: npm run build --if-present
