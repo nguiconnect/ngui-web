@@ -1,3 +1,7 @@
+![Web CI (develop)](https://github.com/nguiconnect/ngui-web/actions/workflows/web-ci.yml/badge.svg?branch=develop)
+![Web CI (main)](https://github.com/nguiconnect/ngui-web/actions/workflows/web-ci.yml/badge.svg?branch=main)
+
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
