@@ -1,17 +1,65 @@
-﻿name: Web CI / build (PR)
+﻿name: Web CI
 
 on:
   pull_request:
-    branches: [ develop, main ]
+  push:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['18', '20']   # élargir à 22 si besoin
+
+    env:
+      CI: true
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Cache npm (liée au lockfile)
+      - name: Use Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
-      - run: npm ci || npm i
-      - run: npm run build --if-present
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+
+      # Sécurité: évite l'échec si le repo ne contient pas package.json
+      - name: Stop if no package.json
+        run: |
+          test -f package.json || { echo "No package.json at repo root – skipping web build."; exit 78; }
+
+      - name: Install deps (npm ci)
+        run: npm ci
+
+      # Lint si script présent
+      - name: Lint
+        run: npm run lint --if-present
+
+      # Tests si script présent
+      - name: Test
+        run: npm test --if-present
+
+      # Build (Vite/React)
+      - name: Build
+        run: npm run build
+
+      # (Optionnel) publier l’artefact de build
+      - name: Upload dist artifact
+        if: success() && hashFiles('dist/**') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist-${{ matrix.node }}
+          path: dist
+          if-no-files-found: ignore
